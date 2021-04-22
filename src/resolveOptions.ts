@@ -1,13 +1,13 @@
 import * as path from 'path';
 import pkgDir from 'pkg-dir';
-import {Options} from './index';
+import { Options } from './index';
 import {
   DEFAULT_MFE_ROUTE,
   DEFAULT_MFE_CONFIG,
   MFE_CONFIG_FILE_NAME,
   MFE_ROUTE_FILE_NAME,
 } from './common';
-import {mfeConfig, mfeRoute} from 'type';
+import { mfeConfig, mfeRoute } from 'type';
 
 const defaultOptions: Required<
   Pick<Options, Exclude<keyof Options, 'hostStatic'>>
@@ -41,7 +41,7 @@ export default async function resolveOptions(
   const packageDir = await pkgDir();
 
   if (!packageDir) {
-    throw new Error("can't resolve package.json");
+    throw new Error('make sure your have a package.json in your project dir');
   }
 
   options = Object.assign(defaultOptions, options);

@@ -1,13 +1,7 @@
 import got from 'got';
-import {ResolvedOptions} from 'resolveOptions';
-import {MFE_ROUTE_FILE_NAME} from './common';
-import {URL} from 'url';
-
-// class fetchRouteTask {
-//   constructor() {
-
-//   }
-// }
+import { ResolvedOptions } from 'resolveOptions';
+import { MFE_ROUTE_FILE_NAME } from './common';
+import { URL } from 'url';
 
 export interface parsedRemotePath {
   /**
@@ -24,8 +18,8 @@ class parserRemotePath {
 
   constructor(private path: string) {}
 
-  extractRouteName(url: string): {appUrl: string; routeFileName: string} {
-    const {searchParams, origin, pathname} = new URL(url);
+  extractRouteName(url: string): { appUrl: string; routeFileName: string } {
+    const { searchParams, origin, pathname } = new URL(url);
 
     return {
       appUrl: origin + pathname,
@@ -100,8 +94,8 @@ export default async function resolveRoutes({
   );
 
   const resolvedRoutes: Array<resolvedRoute> = await Promise.all(
-    parsedUrls.map(async ({appName, appUrl, routeFileName}) => {
-      const {body: route} = await got.get(appUrl + routeFileName, {
+    parsedUrls.map(async ({ appName, appUrl, routeFileName }) => {
+      const { body: route } = await got.get(appUrl + routeFileName, {
         responseType: 'json',
       });
 
