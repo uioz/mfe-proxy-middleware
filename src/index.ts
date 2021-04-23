@@ -1,18 +1,8 @@
-// after testing uninstall express @types/express
-import {Express} from 'express';
-import {mfeConfig, mfeRoute} from './type';
-import resolveOptions, {ResolvedOptions} from './resolveOptions';
-import resolveRoutes, {resolvedRoute} from './resolveRoutes';
-import {createProxyMiddleware} from 'http-proxy-middleware';
-
-// import * as http from 'http';
-// function mfeProxyMiddleware<R extends http.ServerResponse>(
-//   request: http.IncomingMessage,
-//   response: R,
-//   next: () => void
-// ) {
-//   debugger;
-// }
+import { Express } from 'express';
+import { mfeConfig, mfeRoute } from './type';
+import resolveOptions, { ResolvedOptions } from './resolveOptions';
+import resolveRoutes, { resolvedRoute } from './resolveRoutes';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 export interface Options {
   /**
@@ -59,21 +49,27 @@ export async function parseOptions(option?: Options): Promise<parsedOptions> {
   };
 }
 
-export function proxyRoutes(app: Express, {routes}: parsedOptions): void {
+export function proxyRoutes(app: Express, { routes }: parsedOptions): void {
   for (const route of routes) {
-    for (const path of route.domain) {
-      app.use(path, createProxyMiddleware({target: route.appUrl}));
+    if (route.rewrites) {
+      for (const rewrite of route.rewrites) {
+        app.use(rewrite.from, createProxyMiddleware({ target: route.appUrl }));
+      }
+    }
+
+    if (route.domain) {
+      app.use(route.domain, createProxyMiddleware({ target: route.appUrl }));
     }
   }
 }
 
 export function proxyStatic(
   app: Express,
-  {options, routes}: parsedOptions
+  { options, routes }: parsedOptions
 ): void {
   if (options.mfeConfig.usePackageNameAsStaticPrefix) {
-    for (const {appName, appUrl} of routes) {
-      app.use(`/static/${appName}/`, createProxyMiddleware({target: appUrl}));
+    for (const { appName, appUrl } of routes) {
+      app.use(`/static/${appName}/`, createProxyMiddleware({ target: appUrl }));
     }
   }
 }

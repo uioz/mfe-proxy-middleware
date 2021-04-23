@@ -2,6 +2,7 @@ import got from 'got';
 import { ResolvedOptions } from 'resolveOptions';
 import { MFE_ROUTE_FILE_NAME } from './common';
 import { URL } from 'url';
+import { mfeRoute } from './type';
 
 export interface parsedRemotePath {
   /**
@@ -57,23 +58,45 @@ class parserRemotePath {
   }
 }
 
-export interface resolvedRoute extends parsedRemotePath {
-  domain: Array<string>;
+export interface resolvedRoute extends parsedRemotePath, mfeRoute {}
+
+function deduplicate(set: Set<string>, array: Array<string>): Array<string> {
+  return array.filter((item) => {
+    if (!set.has(item)) {
+      set.add(item);
+      return true;
+    }
+    return false;
+  });
 }
 
 function deduplicateRoute(
   set: Set<string>,
   resolvedRoutes: Array<resolvedRoute>
 ): Array<resolvedRoute> {
-  // TODO: only support domain field for now, MPA support later
   for (const route of resolvedRoutes) {
-    route.domain = route.domain.filter((path) => {
-      if (set.has(path)) {
+    // handle rewrites first
+    if (route.rewrites) {
+      route.rewrites = route.rewrites.filter((item) => {
+        if (Array.isArray(item.from)) {
+          item.from = deduplicate(set, item.from);
+          if (item.from.length === 0) {
+            return false;
+          }
+          return true;
+        }
+
+        if (!set.has(item.from)) {
+          set.add(item.from);
+          return true;
+        }
         return false;
-      }
-      set.add(path);
-      return true;
-    });
+      });
+    }
+
+    if (route.domain) {
+      route.domain = deduplicate(set, route.domain);
+    }
   }
   return resolvedRoutes;
 }
