@@ -29,5 +29,10 @@ export interface mfeConfig {
 }
 
 export interface mfeRoute {
-  domain: Array<string>;
+  rewrites?: Array<{
+    from: Array<string> | string;
+    to: string;
+  }>;
+  index?: string;
+  domain?: Array<string>;
 }
