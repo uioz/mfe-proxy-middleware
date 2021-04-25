@@ -1,8 +1,10 @@
 import got from 'got';
 import { ResolvedOptions } from 'resolveOptions';
-import { MFE_ROUTE_FILE_NAME } from './common';
+import { DEFAULT_APP_PROXY_OPTION } from './common';
 import { URL } from 'url';
-import { mfeRoute } from './type';
+import { mfeRoute, appProxyOption } from './type';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJson = require('../package.json');
 
 export interface parsedRemotePath {
   /**
@@ -13,52 +15,11 @@ export interface parsedRemotePath {
   routeFileName: string;
 }
 
-class parserRemotePath {
-  static packageNameWithScope = /^(@.+)@/i;
-  static packageNameWithoutScope = /^(.+)@/i;
-
-  constructor(private path: string) {}
-
-  extractRouteName(url: string): { appUrl: string; routeFileName: string } {
-    const { searchParams, origin, pathname } = new URL(url);
-
-    return {
-      appUrl: origin + pathname,
-      routeFileName: (searchParams as any).route ?? MFE_ROUTE_FILE_NAME,
-    };
-  }
-
-  parse(): parsedRemotePath {
-    if (parserRemotePath.packageNameWithScope.test(this.path)) {
-      // @scope/app2@https://localhost:3000 - >
-      // fullResult '@scope/app2@'
-      // packageName '@scope/app2'
-      const [fullResult, appName] = this.path.match(
-        parserRemotePath.packageNameWithScope
-      ) as Array<string>;
-
-      return {
-        appName,
-        ...this.extractRouteName(this.path.substring(fullResult.length)),
-      };
-    }
-
-    if (parserRemotePath.packageNameWithoutScope.test(this.path)) {
-      const [fullResult, appName] = this.path.match(
-        parserRemotePath.packageNameWithoutScope
-      ) as Array<string>;
-
-      return {
-        appName,
-        ...this.extractRouteName(this.path.substring(fullResult.length)),
-      };
-    }
-
-    throw new Error(`Parse remotePath -> ${this.path} failed!`);
-  }
+export interface resolvedRoute extends mfeRoute {
+  routeUrl: string;
+  publicPath: string;
+  appUrl: string;
 }
-
-export interface resolvedRoute extends parsedRemotePath, mfeRoute {}
 
 function deduplicate(set: Set<string>, array: Array<string>): Array<string> {
   return array.filter((item) => {
@@ -101,32 +62,49 @@ function deduplicateRoute(
   return resolvedRoutes;
 }
 
+function polyfillRoute(
+  appThatNeededProxy: Array<appProxyOption>
+): Array<Required<appProxyOption>> {
+  return appThatNeededProxy.map((appOptions, index) => {
+    if (!appOptions.url) {
+      throw new Error(
+        `${packageJson.name}: missing url in appThatNeededProxy[${index}]`
+      );
+    }
+
+    return {
+      ...DEFAULT_APP_PROXY_OPTION,
+      ...appOptions,
+    };
+  });
+}
+
 export default async function resolveRoutes({
   mfeRoute: localMfeRoute,
   mfeConfig,
   remoteFirst,
 }: ResolvedOptions): Promise<Array<resolvedRoute>> {
-  /**
-   * input from appThatneededProxy may:
-   * app1@http://localhost:3000
-   * @scope/app2@https://localhost:3000
-   * @scope/app2@https://localhost:3000/@path/route.json
-   */
-  const parsedUrls = mfeConfig.appThatneededProxy.map((path) =>
-    new parserRemotePath(path).parse()
-  );
+  const appThatNeededProxy = polyfillRoute(mfeConfig.appThatNeededProxy);
 
   const resolvedRoutes: Array<resolvedRoute> = await Promise.all(
-    parsedUrls.map(async ({ appName, appUrl, routeFileName }) => {
-      const { body: route } = await got.get(appUrl + routeFileName, {
+    appThatNeededProxy.map(async ({ publicPath, route, url }) => {
+      // validate
+      const routeTarget = new URL(route, url);
+      let { pathname } = new URL(publicPath, url);
+
+      if (pathname[pathname.length - 1] !== '/') {
+        pathname = `${pathname}/`;
+      }
+
+      const { body } = await got.get(routeTarget, {
         responseType: 'json',
       });
 
       return {
-        appName,
-        appUrl,
-        routeFileName,
-        ...(route as any),
+        routeUrl: routeTarget.toString(),
+        publicPath: pathname,
+        appUrl: url,
+        ...(body as any),
       };
     })
   );

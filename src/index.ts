@@ -20,12 +20,6 @@ export interface Options {
    * false by default
    */
   remoteFirst?: boolean;
-  /**
-   * TODO: enabled in next major
-   */
-  // hostStatic?: {
-  //   outputDir: string;
-  // };
 }
 
 export interface parsedOptions {
@@ -63,13 +57,8 @@ export function proxyRoutes(app: Express, { routes }: parsedOptions): void {
   }
 }
 
-export function proxyStatic(
-  app: Express,
-  { options, routes }: parsedOptions
-): void {
-  if (options.mfeConfig.usePackageNameAsStaticPrefix) {
-    for (const { appName, appUrl } of routes) {
-      app.use(`/static/${appName}/`, createProxyMiddleware({ target: appUrl }));
-    }
+export function proxyStatic(app: Express, { routes }: parsedOptions): void {
+  for (const { publicPath, appUrl } of routes) {
+    app.use(`${publicPath}*`, createProxyMiddleware({ target: appUrl }));
   }
 }

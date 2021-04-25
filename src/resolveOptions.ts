@@ -8,6 +8,8 @@ import {
   MFE_ROUTE_FILE_NAME,
 } from './common';
 import { mfeConfig, mfeRoute } from 'type';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJson = require('../package.json');
 
 const defaultOptions: Required<
   Pick<Options, Exclude<keyof Options, 'hostStatic'>>
@@ -31,6 +33,24 @@ export interface ResolvedOptions {
   mfeRoute: mfeRoute;
 }
 
+function validateMfeConfig(mfeConfig: mfeConfig) {
+  if (mfeConfig.appThatNeededProxy) {
+    if (
+      Array.isArray(mfeConfig.appThatNeededProxy) &&
+      mfeConfig.appThatNeededProxy.length > 0
+    ) {
+      return true;
+    }
+    throw new Error(
+      `${packageJson.name}: no element in your appThatNeededProxy property in mfe-config`
+    );
+  } else {
+    throw new Error(
+      `${packageJson.name}: no appThatNeededProxy property in mfe-config`
+    );
+  }
+}
+
 /**
  * format and resolve options
  * @param options
@@ -41,10 +61,10 @@ export default async function resolveOptions(
   const packageDir = await pkgDir();
 
   if (!packageDir) {
-    throw new Error('make sure your have a package.json in your project dir');
+    throw new Error('Make sure that your project is a npm package!');
   }
 
-  options = Object.assign(defaultOptions, options);
+  options = Object.assign({}, defaultOptions, options);
 
   const result: ResolvedOptions = {
     packageDir,
@@ -63,8 +83,12 @@ export default async function resolveOptions(
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const localMfeConfig = require(path.join(packageDir, options.mfeConfig));
 
+    validateMfeConfig(localMfeConfig);
     result.mfeConfig = Object.assign(DEFAULT_MFE_CONFIG, localMfeConfig);
-  } else if (isMfeConfig(options.mfeConfig)) {
+  } else if (
+    isMfeConfig(options.mfeConfig) &&
+    validateMfeConfig(options.mfeConfig)
+  ) {
     result.mfeConfig = Object.assign(DEFAULT_MFE_CONFIG, options.mfeConfig);
   }
 
@@ -76,7 +100,7 @@ export default async function resolveOptions(
       result.mfeRoute = require(mfeRoutePath);
     } catch (_error) {
       console.log(
-        `missing file mfe-route.json from ${mfeRoutePath}, use empty route instead.`
+        `missing file ${MFE_ROUTE_FILE_NAME} from ${mfeRoutePath}, use empty route instead.`
       );
       result.mfeRoute = DEFAULT_MFE_ROUTE;
     }
@@ -91,7 +115,7 @@ export default async function resolveOptions(
       result.mfeRoute = require(mfeRoutePath);
     } catch (_error) {
       console.log(
-        `missing file mfe-route.json from ${mfeRoutePath}, use empty route instead.`
+        `missing file ${MFE_ROUTE_FILE_NAME} from ${mfeRoutePath}, use empty route instead.`
       );
       result.mfeRoute = DEFAULT_MFE_ROUTE;
     }
