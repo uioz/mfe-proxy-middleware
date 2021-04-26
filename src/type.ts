@@ -9,7 +9,7 @@ export interface appProxyOption {
    */
   publicPath?: string;
   /**
-   * mfe-route 地址, 默认 '/mfe-route.json'
+   * mfe-route 地址, 默认 'mfe-route.json'
    * 相对于 url 的完整路径
    */
   route?: string;
@@ -41,7 +41,7 @@ export interface mfeConfig {
      */
     outputDir?: string;
     /**
-     * 静态资源前缀, 默认不开启
+     * 静态资源前缀, 默认 true
      */
     staticPrefix?: boolean;
   };
