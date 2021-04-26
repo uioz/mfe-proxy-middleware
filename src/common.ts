@@ -19,7 +19,7 @@ export const DEFAULT_MFE_CONFIG: Required<mfeConfig> = {
   static: {
     outputDir: STATIC_DIR,
     publicPath: '/static',
-    staticPrefix: '',
+    staticPrefix: true,
   },
 };
 

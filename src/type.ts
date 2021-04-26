@@ -33,17 +33,17 @@ export interface mfeConfig {
    */
   static?: {
     /**
-     * 静态资源路径的前缀
+     * 静态资源路径的前缀, 默认 /static
      */
     publicPath?: string;
     /**
-     * 静态资源相对于项目所在的位置
+     * 静态资源相对于项目所在的位置, 默认 ./dist
      */
     outputDir?: string;
     /**
-     * 静态资源前缀
+     * 静态资源前缀, 默认不开启
      */
-    staticPrefix?: boolean | string;
+    staticPrefix?: boolean;
   };
   /**
    * 如果多个项目路由重复则优先匹配靠前的路由
