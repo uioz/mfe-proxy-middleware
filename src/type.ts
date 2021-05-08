@@ -31,20 +31,22 @@ export interface mfeConfig {
    * 当前项目静态配置
    * 由 mfe-proxy-server 使用
    */
-  static?: {
-    /**
-     * 静态资源路径的前缀, 默认 /static
-     */
-    publicPath?: string;
-    /**
-     * 静态资源相对于项目所在的位置, 默认 ./dist
-     */
-    outputDir?: string;
-    /**
-     * 静态资源前缀, 默认 true
-     */
-    staticPrefix?: boolean;
-  };
+  static?:
+    | {
+        /**
+         * 静态资源路径的前缀, 默认 /static
+         */
+        publicPath?: string;
+        /**
+         * 静态资源相对于项目所在的位置, 默认 ./dist
+         */
+        outputDir?: string;
+        /**
+         * 静态资源前缀, 默认 true
+         */
+        staticPrefix?: boolean;
+      }
+    | false;
   /**
    * 如果多个项目路由重复则优先匹配靠前的路由
    * 本地路由的优先级最高
